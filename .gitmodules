@@ -1,0 +1,3 @@
+[submodule "lib/cleverly"]
+	path = lib/cleverly
+	url = https://github.com/DThought/cleverly
