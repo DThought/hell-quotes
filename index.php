@@ -23,7 +23,7 @@ EOF
 CREATE TABLE `$config[table_votes]` (
 	`quote` integer NOT NULL,
 	`user` varchar(64),
-	`created` datetime NOT NULL
+	`updated` datetime NOT NULL
 )
 EOF
 		);
