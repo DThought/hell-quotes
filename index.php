@@ -12,7 +12,7 @@ CREATE TABLE `$config[table_quotes]` (
 	`id` integer PRIMARY KEY ASC,
 	`quote` text NOT NULL,
 	`tags` text,
-	`rating` int NOT NULL DEFAULT '0',
+	`score` int NOT NULL DEFAULT '0',
 	`user` varchar(64),
 	`created` datetime NOT NULL
 )

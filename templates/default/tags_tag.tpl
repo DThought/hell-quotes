@@ -1,1 +1,1 @@
-<a href="?page=search&q={$tag}">$tag</a>
+<a href="?page=search&q={$tag}" class="tag">$tag</a>
