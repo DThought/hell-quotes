@@ -31,5 +31,5 @@ EOF
 		);
 }
 
-$cleverly->display(__DIR__ . "/$config[tpl_path]/index.tpl");
+$cleverly->display(__DIR__ . "/$config[template_path]/index.tpl", $config);
 ?>
