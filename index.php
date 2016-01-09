@@ -21,8 +21,9 @@ CREATE TABLE `$config[table_quotes]` (
 	`id` integer PRIMARY KEY ASC,
 	`quote` text NOT NULL,
 	`tags` text,
-	`score` int NOT NULL DEFAULT '0',
+	`score` integer NOT NULL DEFAULT '0',
 	`user` varchar(64),
+	`queued` integer NOT NULL DEFAULT '0',
 	`created` datetime NOT NULL
 )
 EOF
@@ -63,9 +64,33 @@ $cleverly->display('index.tpl', $config + array(
 
 		switch (@$_GET['page']) {
 			case '':
-				$cleverly->display('main_default.tpl');
+				$cleverly->display('main_home.tpl');
+				break;
+			case 'latest':
+				$cleverly->display('main_latest.tpl');
+				break;
+			case 'browse':
+				$cleverly->display('main_browse.tpl');
+				break;
+			case 'random':
+				$cleverly->display('main_random.tpl');
+				break;
+			case 'top':
+				$cleverly->display('main_top.tpl');
+				break;
+			case 'add':
+				$cleverly->display('main_add.tpl');
+				break;
+			case 'admin':
+				$cleverly->display('main_admin.tpl');
+				break;
+			case 'search':
+				$cleverly->display('main_search.tpl');
 				break;
 		}
+	},
+	'quotes' => function() {
+
 	}
 ));
 ?>

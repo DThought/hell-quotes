@@ -3,6 +3,7 @@ $config['db_path'] = 'quotes.db';
 $config['db_id'] = 'ip';
 $config['table_quotes'] = 'quotes';
 $config['table_votes'] = 'votes';
+$config['mod_enabled'] = false;
 $config['template_path'] = 'templates/default';
 $config['title'] = 'Hell Quotes';
 $config['page_titles']['home'] = 'Home';
