@@ -1,3 +1,3 @@
 <li>
-	<a href="?page={$link_name}">{$link_title}</a>
+	<a href="{$link_url}">{$link_title}</a>
 </li>
