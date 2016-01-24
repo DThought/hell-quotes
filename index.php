@@ -37,6 +37,14 @@ function generate_url($section = NULL, $index = NULL) {
 	}
 }
 
+$user = NULL;
+
+switch ($config['auth_type']) {
+	case 'plain':
+		$user = $_SERVER['PHP_AUTH_USER'];
+		break;
+}
+
 if (@$_GET['page'] == 'home') {
 	header('Location: ./', true, 301);
 }
@@ -64,6 +72,7 @@ EOF
 CREATE TABLE `$config[table_votes]` (
 	`quote` integer NOT NULL,
 	`user` varchar(64),
+	`direction` integer NOT NULL,
 	`updated` datetime NOT NULL
 )
 EOF
@@ -133,6 +142,7 @@ if ($index < $num_index - 7) {
 }
 
 $pager .= generate_link($section, $index, $num_index - 1);
+$voted = 0;
 
 $cleverly->display('index.tpl', $config + array(
 	'page_title' => @$config['page_titles'][$_GET['page']],
@@ -170,7 +180,57 @@ $cleverly->display('index.tpl', $config + array(
 		}
 	},
 	'quotes' => function() {
+		global $pdo;
+		global $voted;
 
+		$result = $pdo->prepare(<<<EOF
+SELECT `$config[table_quotes]`.`id` AS `id`,
+	`$config[table_quotes]`.`quote` AS `quote`,
+	`$config[table_quotes]`.`tags` AS `tags`,
+	`$config[table_quotes]`.`score` AS `score`,
+	`$config[table_quotes]`.`user` AS `user`,
+	`$config[table_quotes]`.`created` AS `created`,
+	`$config[table_votes]`.`direction` AS `direction`
+FROM `$config[table_quotes]
+	LEFT JOIN `$config[table_votes]`
+		ON `$config[table_votes]`.`quote` = `$config[table_quotes]`.`id`
+			AND `$config[table_votes]`.`user` = :user
+$order
+$offset
+EOF
+			);
+
+		$result->execute(array(
+			':user' => $user
+		));
+
+		while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+			$cleverly->display('quotes_quote.tpl', array(
+				'quote_id' => $row['id'],
+				'quote_date' => $row['created'],
+				'quote_text' => $row['quote'],
+				'score' => $row['score']
+			));
+
+
+			$voted = (int) @$row['direction'];
+		}
+	},
+	'score' => function() {
+		global $pdo;
+		global $voted;
+
+		switch ($voted) {
+			case -1:
+				$cleverly->display('score_control_downvoted.tpl');
+				break;
+			case 0:
+				$cleverly->display('score_control.tpl');
+				break;
+			case 1:
+				$cleverly->display('score_control_upvoted.tpl');
+				break;
+		}
 	}
 ));
 ?>

@@ -1,5 +1,5 @@
 <blockquote>
-	{include name=quote_score}
+	{include name=score}
 	<p>{$quote_text}</p>
 	<cite>
 		<span class="date">{$quote_date}</span>

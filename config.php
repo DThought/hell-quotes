@@ -3,6 +3,7 @@ $config['db_path'] = 'quotes.db';
 $config['db_id'] = 'ip';
 $config['table_quotes'] = 'quotes';
 $config['table_votes'] = 'votes';
+$config['quth_type'] = 'basic',
 $config['mod_enabled'] = false;
 $config['pretty_url'] = false;
 $config['quotes_per_page'] = 25;
