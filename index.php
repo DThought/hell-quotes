@@ -11,16 +11,18 @@ function generate_link($section, $src, $dest) {
 
 	return $cleverly->fetch($src == $dest ? 'pager_link_active.tpl' : 'pager_link.tpl', array(
 		'link_index' => $dest,
-		'link_url' => generate_url($section, $dest);
+		'link_url' => generate_url($section, $dest)
 	));
 }
 
 function generate_url($section = NULL, $index = NULL) {
+	global $config;
+
 	if ($section == 'home') {
 		$section = NULL;
 	}
 
-	if ($_config['pretty_url']) {
+	if ($config['pretty_url']) {
 
 	} else {
 		$url = './';
@@ -82,7 +84,7 @@ EOF
 $order = '';
 $section = @$_GET['page'] ? $_GET['page'] : 'home';
 
-if (!isset($config[$section])) {
+if (!isset($config['page_titles'][$section])) {
 	$section = 'error';
 }
 
@@ -101,16 +103,15 @@ switch ($section) {
 		break;
 }
 
-$limit = 'LIMIT ' . $config['posts_per_page'];
 $index = (int) @$_GET['p'];
-$offset = 'OFFSET ' . $index * $config['posts_per_page'];
+$limit = "LIMIT $config[quotes_per_page] OFFSET " . $index * $config['quotes_per_page'];
 $nav = '';
 
 foreach ($config['page_titles'] as $page => $title) {
 	$vars = array(
 		'link_name' => $page,
 		'link_title' => $title,
-		'link_url' => generate_url($page);
+		'link_url' => generate_url($page)
 	);
 
 	$nav .= $cleverly->fetch($page == $section ? 'nav_link_active.tpl' : 'nav_link.tpl', $vars);
@@ -145,11 +146,13 @@ $pager .= generate_link($section, $index, $num_index - 1);
 $voted = 0;
 
 $cleverly->display('index.tpl', $config + array(
-	'page_title' => @$config['page_titles'][$_GET['page']],
+	'page_title' => @$config['page_titles'][$section],
 	'pager' => function() {
 		echo $pager;
 	},
 	'nav' => function() {
+		global $nav;
+
 		echo $nav;
 	},
 	'main' => function() {
@@ -180,7 +183,13 @@ $cleverly->display('index.tpl', $config + array(
 		}
 	},
 	'quotes' => function() {
+		global $cleverly;
+		global $config;
+		global $limit;
+		global $offset;
+		global $order;
 		global $pdo;
+		global $user;
 		global $voted;
 
 		$result = $pdo->prepare(<<<EOF
@@ -191,11 +200,12 @@ SELECT `$config[table_quotes]`.`id` AS `id`,
 	`$config[table_quotes]`.`user` AS `user`,
 	`$config[table_quotes]`.`created` AS `created`,
 	`$config[table_votes]`.`direction` AS `direction`
-FROM `$config[table_quotes]
+FROM `$config[table_quotes]`
 	LEFT JOIN `$config[table_votes]`
 		ON `$config[table_votes]`.`quote` = `$config[table_quotes]`.`id`
 			AND `$config[table_votes]`.`user` = :user
 $order
+$limit
 $offset
 EOF
 			);
@@ -208,15 +218,16 @@ EOF
 			$cleverly->display('quotes_quote.tpl', array(
 				'quote_id' => $row['id'],
 				'quote_date' => $row['created'],
+				'quote_tags' => (string) $row['tags'],
 				'quote_text' => $row['quote'],
-				'score' => $row['score']
+				'quote_score' => $row['score']
 			));
-
 
 			$voted = (int) @$row['direction'];
 		}
 	},
 	'score' => function() {
+		global $cleverly;
 		global $pdo;
 		global $voted;
 

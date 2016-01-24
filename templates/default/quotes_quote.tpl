@@ -3,6 +3,6 @@
 	<p>{$quote_text}</p>
 	<cite>
 		<span class="date">{$quote_date}</span>
-		{include name=tags}
+		<span class="tags">{$quote_tags}</span>
 	</cite>
 </blockquote>
