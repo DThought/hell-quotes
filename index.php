@@ -370,7 +370,7 @@ EOF
 				'quote_date' => $row['created'],
 				'quote_score' => str_replace('-', '&minus;', $row['score']),
 				'quote_tags' => (string) $row['tags'],
-				'quote_text' => htmlentities($row['quote'], NULL, 'UTF-8'),
+				'quote_text' => nl2br(htmlentities($row['quote'], NULL, 'UTF-8')),
 				'quote_url' => '?q=' . $row['id']
 			));
 		}
