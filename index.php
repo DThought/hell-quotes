@@ -46,7 +46,7 @@ $error = '';
 $success = '';
 
 switch ($config['auth_type']) {
-	case 'plain':
+	case 'basic':
 		$user = $_SERVER['PHP_AUTH_USER'];
 		break;
 }
