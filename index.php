@@ -51,8 +51,6 @@ switch ($config['auth_type']) {
 		break;
 }
 
-$user = 'yyu';
-
 if (@$_GET['page'] == 'home') {
 	header('Location: ./', true, 301);
 }
