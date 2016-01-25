@@ -129,7 +129,7 @@ EOF
 
 		$result->execute(array(
 			':quote' => $_POST['quote'],
-			':tags' => trim(preg_replace('/\W+/', '', @$_POST['tags'])),
+			':tags' => trim(preg_replace('/\W+/', ' ', @$_POST['tags'])),
 			':user' => $user
 		));
 
