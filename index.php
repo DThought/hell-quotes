@@ -16,6 +16,7 @@ function generate_link($section, $src, $dest) {
 }
 
 function generate_url($section = NULL, $index = NULL) {
+	global $base;
 	global $config;
 
 	if ($section == 'home') {
@@ -25,7 +26,7 @@ function generate_url($section = NULL, $index = NULL) {
 	if ($config['pretty_url']) {
 
 	} else {
-		$url = './';
+		$url = $base;
 
 		if ($section) {
 			$url .= '?page=' . $section;
@@ -39,6 +40,7 @@ function generate_url($section = NULL, $index = NULL) {
 	}
 }
 
+$base = './';
 $user = NULL;
 $error = '';
 $success = '';
@@ -48,6 +50,8 @@ switch ($config['auth_type']) {
 		$user = $_SERVER['PHP_AUTH_USER'];
 		break;
 }
+
+$user = 'yyu';
 
 if (@$_GET['page'] == 'home') {
 	header('Location: ./', true, 301);
@@ -75,7 +79,7 @@ EOF
 	$pdo->exec(<<<EOF
 CREATE TABLE `$config[table_votes]` (
 	`quote` integer NOT NULL,
-	`user` varchar(64),
+	`user` varchar(64) NOT NULL,
 	`direction` integer NOT NULL,
 	`updated` datetime NOT NULL
 )
@@ -129,10 +133,95 @@ EOF
 			':user' => $user
 		));
 
-		$success = 'Successfully added quote ' . $pdo->lastInsertId() . '.';
+		$_GET['q'] = $pdo->lastInsertId();
+		$success = "Successfully added <a href=\"$base?q=$_GET[q]\">quote $_GET[q]</a>.";
 	} else {
 		$error = 'Please enter a quote.';
 	}
+}
+
+if (array_key_exists('q', $_GET)) {
+	$quote = (int) $_GET['q'];
+
+	$args = array(
+		':user' => $user,
+		':quote' => $quote
+	);
+
+	switch (@$_GET['action']) {
+		case 'upvote':
+		case 'downvote':
+		case 'unvote':
+			$result = $pdo->prepare(<<<EOF
+SELECT `direction`
+FROM `votes`
+WHERE `quote` = :quote
+	AND `user` = :user
+EOF
+				);
+
+			$result->execute($args);
+
+			if ($voted = (int) $result->fetchColumn()) {
+				$result = $pdo->prepare(<<<EOF
+UPDATE `quotes`
+SET `score` = `score` - $voted
+WHERE `id` = :quote
+EOF
+					);
+
+				$result->execute(array(
+					':quote' => $quote
+				));
+			}
+
+			$result = $pdo->prepare(<<<EOF
+DELETE FROM `votes`
+WHERE `quote` = :quote
+	AND `user` = :user
+EOF
+				);
+
+			$result->execute($args);
+
+			if ($_GET['action'] != 'unvote') {
+				$voted = $_GET['action'] == 'upvote' ? 1 : -1;
+
+				$result = $pdo->prepare(<<<EOF
+INSERT INTO `votes` (
+	`quote`,
+	`user`,
+	`direction`,
+	`updated`
+)
+VALUES (
+	:quote,
+	:user,
+	$voted,
+	DATETIME('now')
+)
+EOF
+					);
+
+				$result->execute($args);
+
+				$result = $pdo->prepare(<<<EOF
+UPDATE `quotes`
+SET `score` = `score` + $voted
+WHERE `id` = :quote
+EOF
+					);
+
+				$result->execute(array(
+					':quote' => $quote
+				));
+			}
+
+			break;
+	}
+
+	$order = 'WHERE `id` = ' . $quote;
+	$section = 'single';
 }
 
 $index = (int) @$_GET['p'];
@@ -196,9 +285,10 @@ $cleverly->display('index.tpl', $config + array(
 	'main' => function() {
 		global $cleverly;
 		global $config;
+		global $section;
 
-		switch (@$_GET['page']) {
-			case '':
+		switch ($section) {
+			case 'home':
 				$cleverly->display('main_home.tpl');
 				break;
 			case 'browse':
@@ -206,6 +296,7 @@ $cleverly->display('index.tpl', $config + array(
 				break;
 			case 'latest':
 			case 'random':
+			case 'single':
 			case 'top':
 				$cleverly->display('main_unpaged.tpl');
 				break;
@@ -271,28 +362,30 @@ EOF
 		));
 
 		while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+			$quote = (int) @$row['id'];
+			$voted = (int) @$row['direction'];
+
 			$cleverly->display('quotes_quote.tpl', array(
 				'quote_id' => $row['id'],
 				'quote_date' => $row['created'],
+				'quote_score' => str_replace('-', '&minus;', $row['score']),
 				'quote_tags' => (string) $row['tags'],
 				'quote_text' => htmlentities($row['quote'], NULL, 'UTF-8'),
-				'quote_score' => str_replace('-', '&minus;', $row['score'])
+				'quote_url' => '?q=' . $row['id']
 			));
-
-			$quote = (int) @$row['id'];
-			$voted = (int) @$row['direction'];
 		}
 	},
 	'score' => function() {
+		global $base;
 		global $cleverly;
 		global $pdo;
 		global $quote;
 		global $voted;
 
 		$args = array(
-			'upvote_url' => '?action=upvote&q=' + $quote,
-			'downvote_url' => '?action=downvote&q=' + $quote,
-			'unvote_url' => '?action=unvote&q=' + $quote
+			'upvote_url' => "$base?action=upvote&q=$quote",
+			'downvote_url' => "$base?action=downvote&q=$quote",
+			'unvote_url' => "$base?action=unvote&q=$quote"
 		);
 
 		switch ($voted) {
