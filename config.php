@@ -15,6 +15,6 @@ $config['page_titles']['browse'] = 'Browse';
 $config['page_titles']['random'] = 'Random';
 $config['page_titles']['top'] = 'Top';
 $config['page_titles']['add'] = 'Add Quote';
-$config['page_titles']['admin'] = 'Admin';
-$config['page_titles']['search'] = 'Search';
+//~ $config['page_titles']['admin'] = 'Admin';
+//~ $config['page_titles']['search'] = 'Search';
 ?>

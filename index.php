@@ -40,6 +40,8 @@ function generate_url($section = NULL, $index = NULL) {
 }
 
 $user = NULL;
+$error = '';
+$success = '';
 
 switch ($config['auth_type']) {
 	case 'plain':
@@ -103,6 +105,36 @@ switch ($section) {
 		break;
 }
 
+if (array_key_exists('quote', $_POST)) {
+	if ($_POST['quote']) {
+		$result = $pdo->prepare(<<<EOF
+INSERT INTO `quotes` (
+	`quote`,
+	`tags`,
+	`user`,
+	`created`
+)
+VALUES (
+	:quote,
+	:tags,
+	:user,
+	DATETIME('now')
+)
+EOF
+			);
+
+		$result->execute(array(
+			':quote' => $_POST['quote'],
+			':tags' => trim(preg_replace('/\W+/', '', @$_POST['tags'])),
+			':user' => $user
+		));
+
+		$success = 'Successfully added quote ' . $pdo->lastInsertId() . '.';
+	} else {
+		$error = 'Please enter a quote.';
+	}
+}
+
 $index = (int) @$_GET['p'];
 $limit = "LIMIT $config[quotes_per_page] OFFSET " . $index * $config['quotes_per_page'];
 $nav = '';
@@ -146,6 +178,7 @@ if ($num_index != 0) {
 	$pager .= generate_link($section, $index, $num_index - 1);
 }
 
+$quote = 0;
 $voted = 0;
 
 $cleverly->display('index.tpl', $config + array(
@@ -187,6 +220,23 @@ $cleverly->display('index.tpl', $config + array(
 				break;
 		}
 	},
+	'messages' => function() {
+		global $cleverly;
+		global $error;
+		global $success;
+
+		if ($error) {
+			$cleverly->display('message_error.tpl', array(
+				'message' => $error
+			));
+		}
+
+		if ($success) {
+			$cleverly->display('message_success.tpl', array(
+				'message' => $success
+			));
+		}
+	},
 	'quotes' => function() {
 		global $cleverly;
 		global $config;
@@ -194,6 +244,7 @@ $cleverly->display('index.tpl', $config + array(
 		global $offset;
 		global $order;
 		global $pdo;
+		global $quote;
 		global $user;
 		global $voted;
 
@@ -224,27 +275,35 @@ EOF
 				'quote_id' => $row['id'],
 				'quote_date' => $row['created'],
 				'quote_tags' => (string) $row['tags'],
-				'quote_text' => $row['quote'],
+				'quote_text' => htmlentities($row['quote'], NULL, 'UTF-8'),
 				'quote_score' => str_replace('-', '&minus;', $row['score'])
 			));
 
+			$quote = (int) @$row['id'];
 			$voted = (int) @$row['direction'];
 		}
 	},
 	'score' => function() {
 		global $cleverly;
 		global $pdo;
+		global $quote;
 		global $voted;
+
+		$args = array(
+			'upvote_url' => '?action=upvote&q=' + $quote,
+			'downvote_url' => '?action=downvote&q=' + $quote,
+			'unvote_url' => '?action=unvote&q=' + $quote
+		);
 
 		switch ($voted) {
 			case -1:
-				$cleverly->display('score_control_downvoted.tpl');
+				$cleverly->display('score_control_downvoted.tpl', $args);
 				break;
 			case 0:
-				$cleverly->display('score_control.tpl');
+				$cleverly->display('score_control.tpl', $args);
 				break;
 			case 1:
-				$cleverly->display('score_control_upvoted.tpl');
+				$cleverly->display('score_control_upvoted.tpl', $args);
 				break;
 		}
 	}
