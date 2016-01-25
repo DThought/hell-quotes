@@ -10,7 +10,7 @@ function generate_link($section, $src, $dest) {
 	global $cleverly;
 
 	return $cleverly->fetch($src == $dest ? 'pager_link_active.tpl' : 'pager_link.tpl', array(
-		'link_index' => $dest,
+		'link_index' => $dest + 1,
 		'link_url' => generate_url($section, $dest)
 	));
 }
@@ -99,7 +99,7 @@ switch ($section) {
 		$order = 'ORDER BY RANDOM()';
 		break;
 	case 'top':
-		$order = 'ORDER BY `score`';
+		$order = 'ORDER BY `score` DESC';
 		break;
 }
 
@@ -124,13 +124,13 @@ EOF
 	);
 
 $result->execute();
-$num_index = $result->fetchColumn();
+$num_index = (int) (($result->fetchColumn() - 1) / $config['quotes_per_page']);
 $min_index = max(1, $index - 5);
 $max_index = min($num_index - 2, $index + 5);
 $pager = generate_link($section, $index, 0);
 
 if ($index > 6) {
-	$pager .= ' &ellipses; ';
+	$pager .= ' &hellip; ';
 }
 
 
@@ -139,15 +139,20 @@ for ($i = $min_index; $i <= $max_index; $i++) {
 }
 
 if ($index < $num_index - 7) {
-	$pager .= ' &ellipses; ';
+	$pager .= ' &hellip; ';
 }
 
-$pager .= generate_link($section, $index, $num_index - 1);
+if ($num_index != 0) {
+	$pager .= generate_link($section, $index, $num_index - 1);
+}
+
 $voted = 0;
 
 $cleverly->display('index.tpl', $config + array(
 	'page_title' => @$config['page_titles'][$section],
 	'pager' => function() {
+		global $pager;
+
 		echo $pager;
 	},
 	'nav' => function() {
@@ -220,7 +225,7 @@ EOF
 				'quote_date' => $row['created'],
 				'quote_tags' => (string) $row['tags'],
 				'quote_text' => $row['quote'],
-				'quote_score' => $row['score']
+				'quote_score' => str_replace('-', '&minus;', $row['score'])
 			));
 
 			$voted = (int) @$row['direction'];
