@@ -13,7 +13,21 @@ print_header();
 		<div id="main">
 			<h1>{$title}</h1>
 			{include name=messages}
-			<h2>Quoth the Raven</h2>
+{php}
+$subtitles = array(
+	'Never Forget',
+	'Quoth the Raven',
+	'The Walls Have Ears',
+	'What Did You Say'
+);
+
+$subtitle = $subtitles[mt_rand(0, count($subtitles) - 1)];
+
+echo <<<EOF
+			<h2>$subtitle</h2>
+
+EOF;
+{/php}
 			<ul class="nav pull-left">
 				{include name=nav}
 			</ul>
