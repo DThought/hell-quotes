@@ -160,7 +160,7 @@ EOF
 
 			$result->execute($args);
 
-			if ($voted = (int) $result->fetchColumn()) {
+			if ($voted = (int) $result->fetch(PDO::FETCH_COLUMN)) {
 				$result = $pdo->prepare(<<<EOF
 UPDATE `quotes`
 SET `score` = `score` - $voted
@@ -243,7 +243,7 @@ EOF
 	);
 
 $result->execute();
-$num_index = (int) (($result->fetchColumn() - 1) / $config['quotes_per_page']) + 1;
+$num_index = (int) (($result->fetch(PDO::FETCH_COLUMN) - 1) / $config['quotes_per_page']) + 1;
 $min_index = max(1, $index - 5);
 $max_index = min($num_index - 2, $index + 5);
 $pager = generate_link($section, $index, 0);
