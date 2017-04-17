@@ -346,9 +346,8 @@ SELECT `$config[table_quotes]`.`id` AS `id`,
   `$config[table_quotes]`.`created` AS `created`,
   `$config[table_votes]`.`direction` AS `direction`
 FROM `$config[table_quotes]`
-  LEFT JOIN `$config[table_votes]`
-    ON `$config[table_votes]`.`quote` = `$config[table_quotes]`.`id`
-      AND `$config[table_votes]`.`user` = :user
+LEFT JOIN `$config[table_votes]` ON `$config[table_votes]`.`quote` = `$config[table_quotes]`.`id`
+  AND `$config[table_votes]`.`user` = :user
 $order
 $limit
 $offset
