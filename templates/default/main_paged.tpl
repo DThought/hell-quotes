@@ -1,3 +1,3 @@
-{include name=pager}
-{include name=quotes}
-{include name=pager}
+{include from=$pager}
+{include from=$quotes}
+{include from=$pager}

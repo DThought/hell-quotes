@@ -1,7 +1,7 @@
 <blockquote>
   <cite>
     <a href="{$quote_url}">{$quote_id}</a>
-    {include name=score}
+    {include from=$score}
     <span class="quote-date">{$quote_date}</span>
   </cite>
   <p>{$quote_text}</p>

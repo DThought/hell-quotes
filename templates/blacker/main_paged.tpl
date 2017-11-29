@@ -1,3 +1,3 @@
-<div class="pagination pull-right">{include name=pager}</div>
-{include name=quotes}
-<div class="pagination pull-right">{include name=pager}</div>
+<div class="pagination pull-right">{include from=$pager}</div>
+{include from=$quotes}
+<div class="pagination pull-right">{include from=$pager}</div>

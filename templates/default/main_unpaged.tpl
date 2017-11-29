@@ -1,1 +1,1 @@
-{include name=quotes}
+{include from=$quotes}

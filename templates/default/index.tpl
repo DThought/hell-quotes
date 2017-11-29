@@ -8,9 +8,9 @@
   <body>
     <h1>{$title}</h1>
     <ul>
-      {include name=nav}
+      {include from=$nav}
     </ul>
     <h2>{$page_title}</h2>
-    {include name=main}
+    {include from=$main}
   </body>
 </html>

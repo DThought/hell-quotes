@@ -12,7 +12,7 @@ print_header();
 {/php}
     <div id="main">
       <h1>{$title}</h1>
-      {include name=messages}
+      {include from=$messages}
 {php}
 $subtitles = array(
   'Never Forget',
@@ -29,9 +29,9 @@ echo <<<EOF
 EOF;
 {/php}
       <ul class="nav pull-left">
-        {include name=nav}
+        {include from=$nav}
       </ul>
-      {include name=main}
+      {include from=$main}
     </div>
 {php}
 print_footer(
