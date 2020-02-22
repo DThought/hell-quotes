@@ -5,6 +5,7 @@ $config['table_quotes'] = 'quotes';
 $config['table_votes'] = 'votes';
 $config['auth_type'] = 'basic';
 $config['mod_enabled'] = false;
+$config['pretty_print'] = true;
 $config['pretty_url'] = false;
 $config['quotes_per_page'] = 25;
 $config['template_path'] = 'templates/blacker';

@@ -58,7 +58,11 @@ if (@$_GET['page'] == 'home') {
 $create = !file_exists($config['db_path']);
 $pdo = new PDO('sqlite:' . $config['db_path']);
 $cleverly = new Cleverly();
-$cleverly->preserveIndent = true;
+
+if ($config['pretty_print']) {
+  $cleverly->preserveIndent = true;
+}
+
 $cleverly->setTemplateDir(__DIR__ . '/' . $config['template_path']);
 
 if ($create) {
