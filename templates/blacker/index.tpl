@@ -1,16 +1,14 @@
-{include_php file='../../../lib/include.php'}
+{include_php file='../lib/include.php'}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
 {php}
 print_head('Hell Quotes');
-{/php}
-  </head>
+{/php}  </head>
   <body>
 {php}
 print_header();
-{/php}
-    <div id="main">
+{/php}    <div id="main">
       <h1>{$title}</h1>
       {include from=$messages}
 {php}
@@ -27,8 +25,7 @@ echo <<<EOF
       <h2>$subtitle</h2>
 
 EOF;
-{/php}
-      <ul class="nav pull-left">
+{/php}      <ul class="nav pull-left">
         {include from=$nav}
       </ul>
       {include from=$main}
@@ -38,5 +35,5 @@ print_footer(
   'Copyright &copy; 2015 Will Yu',
   'A service of Blacker House'
 );
-{/php}
-  </body>
+{/php}  </body>
+</html>
