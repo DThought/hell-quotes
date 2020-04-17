@@ -295,12 +295,12 @@ $cleverly->display('index.tpl', $config + array(
         $cleverly->display('main_home.tpl');
         break;
       case 'browse':
+      case 'latest':
+      case 'top':
         $cleverly->display('main_paged.tpl');
         break;
-      case 'latest':
       case 'random':
       case 'single':
-      case 'top':
         $cleverly->display('main_unpaged.tpl');
         break;
       case 'add':
