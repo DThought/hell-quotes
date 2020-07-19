@@ -1,13 +1,14 @@
 <?
+$config['auth_type'] = 'basic';
 $config['db_path'] = 'quotes.db';
 $config['db_id'] = 'ip';
-$config['table_quotes'] = 'quotes';
-$config['table_votes'] = 'votes';
-$config['auth_type'] = 'basic';
 $config['mod_enabled'] = false;
 $config['pretty_print'] = true;
 $config['pretty_url'] = false;
 $config['quotes_per_page'] = 25;
+$config['table_fts'] = null;
+$config['table_quotes'] = 'quotes';
+$config['table_votes'] = 'votes';
 $config['template_path'] = 'templates/blacker';
 $config['title'] = 'Hell Quotes';
 $config['page_titles']['home'] = 'Home';
