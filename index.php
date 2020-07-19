@@ -1,10 +1,6 @@
 <?
-$config = array(
-  'page_titles' => array()
-);
-
-include('config.php');
 include('lib/cleverly/Cleverly.class.php');
+include('include');
 
 function generate_link($section, $src, $dest) {
   global $cleverly;
@@ -82,6 +78,10 @@ CREATE TABLE `$config[table_quotes]` (
 EOF
   );
 
+  if ($config['table_fts']) {
+    quotes_create_fts();
+  }
+
   $pdo->exec(
     <<<EOF
 CREATE TABLE `$config[table_votes]` (
@@ -118,7 +118,7 @@ switch ($section) {
 
 if (array_key_exists('quote', $_POST)) {
   if ($_POST['quote']) {
-    $result = $pdo->prepare(
+    $statement = $pdo->prepare(
       <<<EOF
 INSERT INTO `quotes` (
   `quote`,
@@ -135,7 +135,7 @@ VALUES (
 EOF
     );
 
-    $result->execute(array(
+    $statement->execute(array(
       ':quote' => $_POST['quote'],
       ':tags' => trim(preg_replace('/\W+/', ' ', @$_POST['tags'])),
       ':user' => $user
@@ -161,7 +161,7 @@ if (array_key_exists('q', $_GET)) {
     case 'upvote':
     case 'downvote':
     case 'unvote':
-      $result = $pdo->prepare(
+      $statement = $pdo->prepare(
         <<<EOF
 SELECT `direction`
 FROM `votes`
@@ -170,10 +170,10 @@ WHERE `quote` = :quote
 EOF
       );
 
-      $result->execute($args);
+      $statement->execute($args);
 
-      if ($voted = (int)$result->fetch(PDO::FETCH_COLUMN)) {
-        $result = $pdo->prepare(
+      if ($voted = (int)$statement->fetch(PDO::FETCH_COLUMN)) {
+        $statement = $pdo->prepare(
           <<<EOF
 UPDATE `quotes`
 SET `score` = `score` - $voted
@@ -181,12 +181,12 @@ WHERE `id` = :quote
 EOF
         );
 
-        $result->execute(array(
+        $statement->execute(array(
           ':quote' => $quote
         ));
       }
 
-      $result = $pdo->prepare(
+      $statement = $pdo->prepare(
         <<<EOF
 DELETE FROM `votes`
 WHERE `quote` = :quote
@@ -194,12 +194,12 @@ WHERE `quote` = :quote
 EOF
       );
 
-      $result->execute($args);
+      $statement->execute($args);
 
       if ($_GET['action'] != 'unvote') {
         $voted = $_GET['action'] == 'upvote' ? 1 : -1;
 
-        $result = $pdo->prepare(
+        $statement = $pdo->prepare(
           <<<EOF
 INSERT INTO `votes` (
   `quote`,
@@ -216,9 +216,9 @@ VALUES (
 EOF
         );
 
-        $result->execute($args);
+        $statement->execute($args);
 
-        $result = $pdo->prepare(
+        $statement = $pdo->prepare(
           <<<EOF
 UPDATE `quotes`
 SET `score` = `score` + $voted
@@ -226,7 +226,7 @@ WHERE `id` = :quote
 EOF
         );
 
-        $result->execute(array(
+        $statement->execute(array(
           ':quote' => $quote
         ));
       }
@@ -255,17 +255,17 @@ foreach ($config['page_titles'] as $page => $title) {
   );
 }
 
-$result = $pdo->prepare(
+$statement = $pdo->prepare(
   <<<EOF
 SELECT COUNT(*)
 FROM `$config[table_quotes]`
 EOF
 );
 
-$result->execute();
+$statement->execute();
 
 $num_index = (int)(
-  ($result->fetch(PDO::FETCH_COLUMN) - 1) / $config['quotes_per_page']
+  ($statement->fetch(PDO::FETCH_COLUMN) - 1) / $config['quotes_per_page']
 ) + 1;
 
 $min_index = max(1, $index - 5);
@@ -361,7 +361,7 @@ $cleverly->display('index.tpl', $config + array(
     global $user;
     global $voted;
 
-    $result = $pdo->prepare(
+    $statement = $pdo->prepare(
       <<<EOF
 SELECT `$config[table_quotes]`.`id` AS `id`,
   `$config[table_quotes]`.`quote` AS `quote`,
@@ -379,11 +379,11 @@ $offset
 EOF
     );
 
-    $result->execute(array(
+    $statement->execute(array(
       ':user' => $user
     ));
 
-    while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+    while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
       $quote = (int)@$row['id'];
       $voted = (int)@$row['direction'];
 
