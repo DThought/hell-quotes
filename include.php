@@ -20,8 +20,6 @@ USING FTS5 (
 EOF
   );
 
-var_dump($pdo->errorInfo());
-
   $pdo->exec(
     <<<EOF
 CREATE TRIGGER `post_insert` AFTER INSERT ON `$config[table_quotes]` BEGIN
@@ -38,8 +36,6 @@ CREATE TRIGGER `post_insert` AFTER INSERT ON `$config[table_quotes]` BEGIN
 END
 EOF
   );
-
-var_dump($pdo->errorInfo());
 
   $pdo->exec(
     <<<EOF
@@ -58,8 +54,6 @@ CREATE TRIGGER `post_delete` AFTER DELETE ON `$config[table_quotes]` BEGIN
 END
 EOF
   );
-
-var_dump($pdo->errorInfo());
 
   $pdo->exec(
     <<<EOF
@@ -88,7 +82,5 @@ CREATE TRIGGER `post_update` AFTER UPDATE ON `$config[table_quotes]` BEGIN
 END
 EOF
   );
-
-var_dump($pdo->errorInfo());
 }
 ?>
