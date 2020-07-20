@@ -1,6 +1,8 @@
 <?
 include('lib/cleverly/Cleverly.class.php');
-include('include');
+include('include.php');
+
+define('QUOTES_DEFAULT_PAGE', 'latest');
 
 function generate_link($section, $src, $dest) {
   global $cleverly;
@@ -49,7 +51,7 @@ switch ($config['auth_type']) {
     break;
 }
 
-if (@$_GET['page'] == 'home') {
+if (@$_GET['page'] == QUOTES_DEFAULT_PAGE) {
   header('Location: ./', true, 301);
 }
 
@@ -95,32 +97,27 @@ EOF
 }
 
 $order = '';
-$section = @$_GET['page'] ? $_GET['page'] : 'home';
+$section = @$_GET['page'] ? $_GET['page'] : QUOTES_DEFAULT_PAGE;
 
 if (!isset($config['page_titles'][$section])) {
   $section = 'error';
 }
 
-switch ($section) {
-  case 'latest':
-    $order = 'ORDER BY `created` DESC';
-    break;
-  case 'browse':
-    $order = 'ORDER BY `created`';
-    break;
-  case 'random':
-    $order = 'ORDER BY RANDOM()';
-    break;
-  case 'top':
-    $order = 'ORDER BY `score` DESC';
-    break;
+if (isset($_GET['search'])) {
+  if (!$config['table_fts']) {
+    $error = 'Full-text search is not enabled.';
+  } else if (!$_GET['search']) {
+    $error = 'Please enter a search query.';
+  } else {
+    $section = 'search';
+  }
 }
 
-if (array_key_exists('quote', $_POST)) {
+if (isset($_POST['quote'])) {
   if ($_POST['quote']) {
     $statement = $pdo->prepare(
       <<<EOF
-INSERT INTO `quotes` (
+INSERT INTO `$config[table_quotes]` (
   `quote`,
   `tags`,
   `user`,
@@ -149,10 +146,10 @@ EOF
   }
 }
 
-if (array_key_exists('q', $_GET)) {
+if (isset($_GET['q'])) {
   $quote = (int)$_GET['q'];
 
-  $args = array(
+  $parameters = array(
     ':user' => $user,
     ':quote' => $quote
   );
@@ -170,12 +167,12 @@ WHERE `quote` = :quote
 EOF
       );
 
-      $statement->execute($args);
+      $statement->execute($parameters);
 
       if ($voted = (int)$statement->fetch(PDO::FETCH_COLUMN)) {
         $statement = $pdo->prepare(
           <<<EOF
-UPDATE `quotes`
+UPDATE `$config[table_quotes]`
 SET `score` = `score` - $voted
 WHERE `id` = :quote
 EOF
@@ -194,7 +191,7 @@ WHERE `quote` = :quote
 EOF
       );
 
-      $statement->execute($args);
+      $statement->execute($parameters);
 
       if ($_GET['action'] != 'unvote') {
         $voted = $_GET['action'] == 'upvote' ? 1 : -1;
@@ -216,11 +213,11 @@ VALUES (
 EOF
         );
 
-        $statement->execute($args);
+        $statement->execute($parameters);
 
         $statement = $pdo->prepare(
           <<<EOF
-UPDATE `quotes`
+UPDATE `$config[table_quotes]`
 SET `score` = `score` + $voted
 WHERE `id` = :quote
 EOF
@@ -234,8 +231,32 @@ EOF
       break;
   }
 
-  $order = 'WHERE `id` = ' . $quote;
   $section = 'single';
+}
+
+switch ($section) {
+  case 'latest':
+    $order = 'ORDER BY `created` DESC';
+    break;
+  case 'browse':
+    $order = 'ORDER BY `created`';
+    break;
+  case 'random':
+    $order = 'ORDER BY RANDOM()';
+    break;
+  case 'search':
+    $order = <<<EOF
+INNER JOIN `$config[table_fts]` ON `$config[table_quotes]`.`id` = `$config[table_fts]`.`rowid`
+WHERE `$config[table_fts]` MATCH :query
+ORDER BY `$config[table_fts]`.`rank`
+EOF;
+    break;
+  case 'single':
+    $order = 'WHERE `id` = ' . (int)$_GET['q'];
+    break;
+  case 'top':
+    $order = 'ORDER BY `score` DESC';
+    break;
 }
 
 $index = (int)@$_GET['p'];
@@ -276,7 +297,6 @@ if ($index > 6) {
   $pager .= ' &hellip; ';
 }
 
-
 for ($i = $min_index; $i <= $max_index; $i++) {
   $pager .= generate_link($section, $index, $i);
 }
@@ -291,9 +311,10 @@ if ($num_index != 0) {
 
 $quote = 0;
 $voted = 0;
+$page_title = @$config['page_titles'][$section];
 
 $cleverly->display('index.tpl', $config + array(
-  'page_title' => @$config['page_titles'][$section],
+  'page_title' => $page_title ? $page_title : ucfirst($section),
   'pager' => function() {
     global $pager;
 
@@ -310,15 +331,13 @@ $cleverly->display('index.tpl', $config + array(
     global $section;
 
     switch ($section) {
-      case 'home':
-        $cleverly->display('main_home.tpl');
-        break;
       case 'browse':
       case 'latest':
       case 'top':
         $cleverly->display('main_paged.tpl');
         break;
       case 'random':
+      case 'search':
       case 'single':
         $cleverly->display('main_unpaged.tpl');
         break;
@@ -327,9 +346,6 @@ $cleverly->display('index.tpl', $config + array(
         break;
       case 'admin':
         $cleverly->display('main_admin.tpl');
-        break;
-      case 'search':
-        $cleverly->display('main_search.tpl');
         break;
     }
   },
@@ -358,6 +374,7 @@ $cleverly->display('index.tpl', $config + array(
     global $order;
     global $pdo;
     global $quote;
+    global $section;
     global $user;
     global $voted;
 
@@ -379,9 +396,15 @@ $offset
 EOF
     );
 
-    $statement->execute(array(
+    $parameters = array(
       ':user' => $user
-    ));
+    );
+
+    if ($section === 'search') {
+      $parameters[':query'] = $_GET['search'];
+    }
+
+    $statement->execute($parameters);
 
     while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
       $quote = (int)@$row['id'];
@@ -404,7 +427,7 @@ EOF
     global $quote;
     global $voted;
 
-    $args = array(
+    $parameters = array(
       'upvote_url' => "$base?action=upvote&q=$quote",
       'downvote_url' => "$base?action=downvote&q=$quote",
       'unvote_url' => "$base?action=unvote&q=$quote"
@@ -412,14 +435,24 @@ EOF
 
     switch ($voted) {
       case -1:
-        $cleverly->display('score_control_downvoted.tpl', $args);
+        $cleverly->display('score_control_downvoted.tpl', $parameters);
         break;
       case 0:
-        $cleverly->display('score_control.tpl', $args);
+        $cleverly->display('score_control.tpl', $parameters);
         break;
       case 1:
-        $cleverly->display('score_control_upvoted.tpl', $args);
+        $cleverly->display('score_control_upvoted.tpl', $parameters);
         break;
+    }
+  },
+  'search' => function() {
+    global $cleverly;
+    global $config;
+
+    if ($config['table_fts']) {
+      $cleverly->display('search.tpl', array(
+        'search_query' => htmlentities(@$_GET['search'], null, 'UTF-8')
+      ));
     }
   }
 ));

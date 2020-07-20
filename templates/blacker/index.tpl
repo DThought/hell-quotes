@@ -28,6 +28,7 @@ EOF;
 {/php}      <ul class="nav pull-left">
         {include from=$nav}
       </ul>
+      {include from=$search}
       {include from=$main}
     </div>
 {php}

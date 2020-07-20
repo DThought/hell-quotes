@@ -10,6 +10,7 @@
     <ul>
       {include from=$nav}
     </ul>
+    {include from=$search}
     <h2>{$page_title}</h2>
     {include from=$main}
   </body>
