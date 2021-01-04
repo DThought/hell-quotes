@@ -1,2 +1,2 @@
 {include from=$quotes}
-<div class="pagination pull-right">{include from=$pager}</div>
+<div class="pagination pull-right">{$pager}</div>

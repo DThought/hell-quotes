@@ -8,7 +8,7 @@ function generate_link($section, $src, $dest) {
   global $cleverly;
 
   return $cleverly->fetch(
-    $src == $dest ? 'pager_link_active.tpl' : 'pager_link.tpl', array(
+    $src === $dest ? 'pager_link_active.tpl' : 'pager_link.tpl', array(
       'link_index' => $dest + 1,
       'link_url' => generate_url($section, $dest)
     )
@@ -19,7 +19,7 @@ function generate_url($section = NULL, $index = NULL) {
   global $base;
   global $config;
 
-  if ($section == 'home') {
+  if ($section === 'home') {
     $section = NULL;
   }
 
@@ -51,7 +51,7 @@ switch ($config['auth_type']) {
     break;
 }
 
-if (@$_GET['page'] == QUOTES_DEFAULT_PAGE) {
+if (@$_GET['page'] === QUOTES_DEFAULT_PAGE) {
   header('Location: ./', true, 301);
 }
 
@@ -81,7 +81,7 @@ EOF
   );
 
   if ($config['table_fts']) {
-    quotes_create_fts();
+    quotes_create_fts($pdo);
   }
 
   $pdo->exec(
@@ -193,8 +193,8 @@ EOF
 
       $statement->execute($parameters);
 
-      if ($_GET['action'] != 'unvote') {
-        $voted = $_GET['action'] == 'upvote' ? 1 : -1;
+      if ($_GET['action'] !== 'unvote') {
+        $voted = $_GET['action'] === 'upvote' ? 1 : -1;
 
         $statement = $pdo->prepare(
           <<<EOF
@@ -272,7 +272,7 @@ foreach ($config['page_titles'] as $page => $title) {
   );
 
   $nav .= $cleverly->fetch(
-    $page == $section ? 'nav_link_active.tpl' : 'nav_link.tpl', $vars
+    $page === $section ? 'nav_link_active.tpl' : 'nav_link.tpl', $vars
   );
 }
 
@@ -285,28 +285,32 @@ EOF
 
 $statement->execute();
 
-$num_index = (int)(
+$page_number_current = (int)(
   ($statement->fetch(PDO::FETCH_COLUMN) - 1) / $config['quotes_per_page']
 ) + 1;
 
-$min_index = max(1, $index - 5);
-$max_index = min($num_index - 2, $index + 5);
+$page_number_min = max(1, $index - 5);
+$page_number_max = min($page_number_current - 2, $index + 5);
 $pager = generate_link($section, $index, 0);
 
 if ($index > 6) {
   $pager .= ' &hellip; ';
 }
 
-for ($i = $min_index; $i <= $max_index; $i++) {
-  $pager .= generate_link($section, $index, $i);
+for (
+  $page_number = $page_number_min;
+  $page_number <= $page_number_max;
+  $page_number++
+) {
+  $pager .= generate_link($section, $index, $page_number);
 }
 
-if ($index < $num_index - 7) {
+if ($index < $page_number_current - 7) {
   $pager .= ' &hellip; ';
 }
 
-if ($num_index != 0) {
-  $pager .= generate_link($section, $index, $num_index - 1);
+if ($page_number_current !== 1) {
+  $pager .= generate_link($section, $index, $page_number_current - 1);
 }
 
 $quote = 0;
@@ -315,16 +319,8 @@ $page_title = @$config['page_titles'][$section];
 
 $cleverly->display('index.tpl', $config + array(
   'page_title' => $page_title ? $page_title : ucfirst($section),
-  'pager' => function() {
-    global $pager;
-
-    echo $pager;
-  },
-  'nav' => function() {
-    global $nav;
-
-    echo $nav;
-  },
+  'pager' => $pager,
+  'nav' => $nav,
   'main' => function() {
     global $cleverly;
     global $config;

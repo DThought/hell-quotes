@@ -8,7 +8,7 @@
   <body>
     <h1>{$title}</h1>
     <ul>
-      {include from=$nav}
+      {$nav}
     </ul>
     {include from=$search}
     <h2>{$page_title}</h2>
